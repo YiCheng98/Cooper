@@ -27,5 +27,7 @@ Note that the original P4G dataset only provides strategy annotation on part of 
 
 ## References
 <span id="jump1">[1]</span> Liu, Siyang, et al. "Towards Emotional Support Dialog Systems." _ACL_. 2021.
+
 <span id="jump2">[2]</span> Wang, Xuewei, et al. "Persuasion for Good: Towards a Personalized Persuasive Dialogue System for Social Good." _ACL_. 2019.
+
 <span id="jump3">[3]</span> Cheng, Yi, et al. "Improving Multi-turn Emotional Support Dialogue Generation with Lookahead Strategy Planning." _EMNLP_. 2022.
