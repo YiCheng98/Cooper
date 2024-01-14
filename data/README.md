@@ -16,11 +16,19 @@ Please refer to the appendix of our paper for all the prompt templates we used f
 ## Pseudo-Labeling for Topic Ranking Results
 We conducted pseudo-labeling for the topic ranking results, in order to provide supervision to train the topic candidate ranker in our framework. 
 
-Run the following codes to conduct pseudo labelling on the two datasets. 
+We use [all-mpnet-base-v2](https://huggingface.co/sentence-transformers/all-mpnet-base-v2) to measure text similarity during this labeling process. Please first install sentence-transformers so that you could load the model easily:
+```
+pip install -U sentence-transformers
+```
+
+Run the following commands to conduct pseudo-labeling on the two datasets. If, for some reason, you could not automatically download the model by running the following commands, please manually download it by referring to this [link](https://huggingface.co/sentence-transformers/all-mpnet-base-v2).
 ```
 python psuedo_label_topic_ranking.py --mode esconv
 python psuedo_label_topic_ranking.py --mode P4G
 ```
+
+
+
 The labeling process will typically take 2~3 hours on each dataset. The labeling results will be saved under the  "**./*/api_annotated_w_ranking/**" subdirectory. The ranking scores and labels will be saved under the **"ranking scores"** key. 
 
 Note that the original P4G dataset only provides strategy annotation on part of the samples (300 dialogue samples, specifically). Since our pseudo-labeling relies on that strategy annotation, we only conduct pseudo-labeling on these samples. When splitting the dataset, we ensure all the samples in the validation and test sets are annotated with strategies and pseudo-labeling results for topic ranking.
