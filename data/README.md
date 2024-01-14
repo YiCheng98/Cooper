@@ -21,7 +21,7 @@ We use [all-mpnet-base-v2](https://huggingface.co/sentence-transformers/all-mpne
 pip install -U sentence-transformers
 ```
 
-Run the following commands to conduct pseudo-labeling on the two datasets. If, for some reason, you could not automatically download the model by running the following commands, please manually download it by referring to this [link](https://huggingface.co/sentence-transformers/all-mpnet-base-v2).
+Run the following commands to conduct pseudo-labeling on the two datasets. If, for some reason, you could not automatically download the all-mpnet-base-v2 model by running the following commands, please manually download it by referring from this [link](https://huggingface.co/sentence-transformers/all-mpnet-base-v2/tree/main).
 ```
 python psuedo_label_topic_ranking.py --mode esconv
 python psuedo_label_topic_ranking.py --mode P4G
