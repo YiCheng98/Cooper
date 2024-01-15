@@ -5,7 +5,7 @@ Please first download the data from [Google Drive](https://drive.google.com/driv
 The subdirectory "**./*/original_data/**" provides the original data of ESConv and P4G datasets. For ESConv, we used the preprocessed version from [Cheng et al.](https://github.com/lwgkzl/MultiESC/tree/main/MultiESC/data) [\[3\]](#jump3).
 
 ## Annotation with ChatGPT
-For each generation turn from the system side, we automatically annotated the **state summaries** of each dialogue goal aspect and the potential **topic candidates** at that turn, using GPT-3.5-turbo. The subdirectory "**./*/api_annotated/**" provides the annotated_data. All the annotations are saved under the **"states"** key of each dialogue turn. 
+For each generation turn from the system side, we automatically annotated the **state summaries** of each dialogue goal aspect and the potential **topic candidates** at that turn, using GPT-3.5-turbo. The subdirectory "**./*/api_annotated/**" provides the annotated data. All the annotations are saved under the **"states"** key of each dialogue turn. 
 
 - *Dialogue Goal Aspect*: We argue that complex dialogue goals can be typically divided into several inter-connected aspects. For instance, Emotional Support Conversations (ESC) should include three key aspects: exploration, comforting, and action. Please refer to the Preliminaries section in our paper for details about how we define the dialogue goal aspects on our experimental tasks. 
 - *State Summary* : It aims to summarize the previous efforts in achieving the given dialogue goal aspect. For example, to get the state summary for the exploration aspect in ESC, we prompt the LLM to “*summarize the seeker’s experience that caused their emotional distress*.”
@@ -21,7 +21,7 @@ We use [all-mpnet-base-v2](https://huggingface.co/sentence-transformers/all-mpne
 pip install -U sentence-transformers
 ```
 
-Run the following commands to conduct pseudo-labeling on the two datasets. If, for some reason, you could not automatically download the all-mpnet-base-v2 model by running the following commands, please manually download it by referring from this [link](https://huggingface.co/sentence-transformers/all-mpnet-base-v2/tree/main).
+Run the following commands to conduct pseudo-labeling on the two datasets. If, for some reason, you could not automatically download the all-mpnet-base-v2 model by running the following commands, please manually download it by referring to this [link](https://huggingface.co/sentence-transformers/all-mpnet-base-v2/tree/main).
 ```
 python psuedo_label_topic_ranking.py --mode esconv
 python psuedo_label_topic_ranking.py --mode P4G
