@@ -1,0 +1,11 @@
+__pycache__
+.idea
+.DS_Store
+*.egg-info
+build
+.venv
+.vscode
+data/esconv/*
+data/P4G/*
+TopicRanking/data/*
+TopicRanking/output/*
