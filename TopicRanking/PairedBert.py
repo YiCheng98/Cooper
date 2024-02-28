@@ -257,7 +257,6 @@ class BertForTopicRanking_add_progression_magin(BertPreTrainedModel):
             attentions=outputs.attentions,
         )
 
-
 class BertForTopicRanking_add_progression_magin_in_point_loss(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
@@ -384,7 +383,6 @@ class BertForTopicRanking_add_progression_magin_in_point_loss(BertPreTrainedMode
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
         )
-
 
 class BertForTopicRanking_add_progression_magin_only_in_point_loss(BertPreTrainedModel):
     def __init__(self, config):

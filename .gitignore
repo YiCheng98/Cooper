@@ -9,3 +9,4 @@ data/esconv/*
 data/P4G/*
 TopicRanking/data/*
 TopicRanking/output/*
+utils/call_LLM_API/api_key.txt

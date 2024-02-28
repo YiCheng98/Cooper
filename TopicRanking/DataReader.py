@@ -162,7 +162,7 @@ class TopicRankingDataset(Dataset):
             ans_list.append(tmp_dic)
         return ans_list
 
-    def __getitem__(self, item):## item是编号， item一个整数， item>=0 item< __len()__
+    def __getitem__(self, item):## item>=0 item< __len()__
         tmp_dic = self.total_data[item]
         return self.get_model_input(tmp_dic)
 

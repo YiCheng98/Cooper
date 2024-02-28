@@ -33,9 +33,9 @@ bert feedback predict
 parser = argparse.ArgumentParser()
 parser.add_argument('--pretrain_model',default='bert-base-uncased',
                         help='Pretrain model weight')
-parser.add_argument('--output_dir', default='./output/esconv',
+parser.add_argument('--output_dir', default='output/esconv',
                         help='The output directory where the model predictions and checkpoints will be written.')
-parser.add_argument('--data_dir', default='./data/esconv',
+parser.add_argument('--data_dir', default='data/esconv',
                         help='Path saved data')
 parser.add_argument('--seed',default=42,
                         help='Path saved data')
@@ -77,7 +77,7 @@ model, loading_info = MODEL_LIST[args.model_type].from_pretrained(args.pretrain_
                                                           output_loading_info=True)
 sencond_parameters = loading_info['missing_keys']
 
-if 'p4g' in args.data_dir:
+if 'P4G' in args.data_dir:
     train_set = TopicRankingDataset(train_path, tokenizer, data_type='p4g')
     eval_set = TopicRankingDataset(val_path, tokenizer, data_type='p4g')
     test_set = TopicRankingDataset(test_path, tokenizer, data_type='p4g')

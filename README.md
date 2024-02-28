@@ -15,6 +15,6 @@ python generate_ranking_data.py --dataset_type esconv
 ```
 Run the following command to train the topic ranking module.
 ```
-python train.py --data_dir data/esconv/ --output_dir esconv
+python train.py --data_dir data/esconv/ --output_dir output/esconv/
 ```
-To conduct the experiment on the P4G dataset, you can substitute ``--dataset_type esconv`` with ``--dataset_type P4G``.
+To conduct the experiment on the P4G dataset, you can substitute ``esconv`` with ``P4G`` in the above commands.
