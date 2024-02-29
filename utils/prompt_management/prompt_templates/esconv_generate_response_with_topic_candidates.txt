@@ -1,0 +1,13 @@
+[Dialogue History]
+{dialogue_history}
+Supporter: [Next Response]
+
+[Topic Candidates]
+{topic_candidates}
+
+The above [Dialogue History] is a conversation between an emotional-support seeker and the supporter. The [Topic Candidates] are the possible content that the supporter might be able to mention in the [Next Response].
+
+Based on the [Dialogue History] and the suggested [Topic Candidates], draft the [Next Response] of the Supporter (less than 40 words). Your answer should be in the following format:
+Supporter: [Your generated Next Response]
+
+Your answer is:

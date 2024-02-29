@@ -1,0 +1,4 @@
+The following is a conversation between a Persuader and a Persuadee. Given the following dialogue history, generate the next response of the Persuader.
+
+{dialogue_history}
+Persuader:

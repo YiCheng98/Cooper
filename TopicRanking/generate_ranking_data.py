@@ -32,10 +32,18 @@ def transfrom2rankingdata(dialog_data):
             if "states" not in turn.keys():
                 continue
             tmp = sample["dialog"][:i]#[max(0, i-4):i]
+            gold_response = turn["text"]
             dialogue_history = speaker_sep_token.join([f"{item['speaker']}: {item['text']}" for item in tmp])
+            states = turn["states"]
+            extrated_states = dict()
+            for state_key in state_keys:
+                if state_key.endswith("_state"):
+                    extrated_states[state_key] = states[state_key]
             ranking_data.append({"dialogue_history": dialogue_history,
                                  "topic_candidates": turn["states"]["topic_candidates"],
-                                 "progression_info":  turn["states"]["progression_info"]})
+                                 "progression_info":  turn["states"]["progression_info"],
+                                 "gold_response": gold_response,
+                                 "states": extrated_states})
     return ranking_data
 
 def calculate_distances(centers, v):

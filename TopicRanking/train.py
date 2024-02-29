@@ -27,91 +27,11 @@ from collections import defaultdict, Counter
 # from clss_trainer import MyTrainer as TrainerHfArgumentParserCounter
 import warnings
 warnings.filterwarnings("ignore")
-'''
-bert feedback predict
-'''
-parser = argparse.ArgumentParser()
-parser.add_argument('--pretrain_model',default='bert-base-uncased',
-                        help='Pretrain model weight')
-parser.add_argument('--output_dir', default='output/esconv',
-                        help='The output directory where the model predictions and checkpoints will be written.')
-parser.add_argument('--data_dir', default='data/esconv',
-                        help='Path saved data')
-parser.add_argument('--seed',default=42,
-                        help='Path saved data')
-parser.add_argument('--per_device_train_batch_size', default=16, type=int)
-parser.add_argument('--per_device_eval_batch_size', default=32, type=int)
-# parser.add_argument('--per_device_eval_batch_size', default=32, type=int)
-parser.add_argument('--num_train_epochs', default=5, type=int)
-parser.add_argument('--learning_rate', default=5e-5, type=float)
-parser.add_argument('--lr2', default=5e-5, type=float)
-parser.add_argument('--evaluation_strategy', default="epoch", type=str)
-parser.add_argument('--save_strategy', default="epoch", type=str)
-parser.add_argument('--do_train', default=True)
-parser.add_argument('--do_eval', default=True)
-parser.add_argument('--do_predict', default=True)
-parser.add_argument('--load_best_model_at_end', default=True)
-parser.add_argument("--metric_for_best_model", default="topacc@3")
-parser.add_argument("--save_total_limit", default=3, type=int)
-parser.add_argument("--model_type", default="1")
-parser.add_argument("--cluster_num", default=6)
-parser.add_argument("--optim_type", default="2")
 
+args, model, tokenizer, train_set, eval_set, test_set = None, None, None, None, None, None
 
-
-# parser.add_argument('--load_best_model_at_end', default=True)
-args = parser.parse_args()
-# print(args.extend_data, args.output_dir)
-# args.output_dir = f'rebase_03/{args.output_dir}_model{args.model_type}_cluster_{args.cluster_num}_optim_{args.optim_type}'
-# args.output_dir = f'seventh_try/{args.output_dir}_model{args.model_type}_cluster_{args.cluster_num}'
-args.logging_dir = args.output_dir + "/runs"
-
-# strateges = get_stratege('../new_strategy.json', norm=True)
-# stratege2id = {v: k for k, v in enumerate(strateges)}
-train_path = args.data_dir + '/train.json'
-val_path = args.data_dir + '/dev.json'
-test_path = args.data_dir + '/test.json'
-tokenizer = BertTokenizer.from_pretrained(args.pretrain_model, use_fast=False)
-
-model, loading_info = MODEL_LIST[args.model_type].from_pretrained(args.pretrain_model, num_labels=1, problem_type="regression",
-                                                          output_loading_info=True)
-sencond_parameters = loading_info['missing_keys']
-
-if 'P4G' in args.data_dir:
-    train_set = TopicRankingDataset(train_path, tokenizer, data_type='p4g')
-    eval_set = TopicRankingDataset(val_path, tokenizer, data_type='p4g')
-    test_set = TopicRankingDataset(test_path, tokenizer, data_type='p4g')
-else:
-    train_set = TopicRankingDataset(train_path, tokenizer, cluster_num=args.cluster_num)
-    eval_set = TopicRankingDataset(val_path, tokenizer, cluster_num=args.cluster_num)
-    test_set = TopicRankingDataset(test_path, tokenizer, cluster_num=args.cluster_num)
-
-print(f"output_dir: {args.output_dir}")
-if not os.path.exists(args.output_dir):
-    os.makedirs(args.output_dir)
-
-def compute_metrics_with_raning_result_before(result):
-    labels = result.label_ids
-    preds = result.predictions
-    query_dict = defaultdict(list)
-    for pre_prob, ql in zip(preds, labels):
-        label, qid = ql
-        query_dict[qid].append((pre_prob, label))
-    pos_num,neg_num = 0, 0
-    for q in query_dict:
-        v_list = query_dict[q]
-        v_len = len(v_list)
-        for i in range(v_len):
-            for j in range(i+1, v_len):
-                pre_flag = v_list[i][0] - v_list[j][0]
-                label_flag = v_list[i][1] - v_list[j][1]
-                if pre_flag * label_flag > 0:
-                    pos_num += 1
-                if pre_flag * label_flag < 0:
-                    neg_num += 1
-    # totalnum = pos_num + neg_num
-    pnr = pos_num / neg_num if neg_num > 0 else 0
-    return {'pnr':pnr}
+def ranking_label_map(label, total_labels):
+    return total_labels - label + 1
 
 def compute_metrics_with_ranking_result(result):
     # TOP1 ACC, MAP@3, MAP@5, DCG@3, DCG@5.
@@ -149,7 +69,6 @@ def compute_metrics_with_ranking_result(result):
         dcg5 += np.sum(np.array(pred_labels[:5])) / np.sum(np.arange(len(sorted_prob_label)-5, len(sorted_prob_label)) )
         edcg5 += np.sum(np.exp2(np.array(pred_labels[:5]))-5) / np.sum(np.exp2(np.arange(len(sorted_prob_label)-5, len(sorted_prob_label))) -5)
 
-# 需要定义清楚， gt是top3还是top1？ 如果是top1，那么为什么生成的时候使用top3？ 如果是top3， 那么这是怎么定义的？
 
     ans = {
         "topacc@1": top1_acc / len(query_dict),
@@ -212,25 +131,21 @@ from typing import Iterator, Optional, Sequence, List, TypeVar, Generic, Sized
 
 class QuerySequentialSampler(Sampler[int]):
     r"""Samples elements sequentially, always in the same order.
-
     Args:
         data_source (Dataset): dataset to sample from
     """
     # data_source: Sized
-
     def __init__(self, data_source) -> None:
         self.data_source = data_source
-
-
     def __iter__(self) -> Iterator[int]:
         random.shuffle(self.data_source.index_list)
         for x in self.data_source.index_list:
             for i in range(x[0],x[1]):
                 yield i
         # return iter(range(len(self.data_source)))
-
     def __len__(self) -> int:
         return len(self.data_source)
+
 class SeqTrain(Trainer):
     def get_train_dataloader(self) -> DataLoader:
         """
@@ -322,6 +237,67 @@ def test_one_case():
 
 
 if __name__ == '__main__':
+    '''
+    bert feedback predict
+    '''
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--pretrain_model', default='bert-base-uncased',
+                        help='Pretrain model weight')
+    parser.add_argument('--output_dir', default='output/esconv',
+                        help='The output directory where the model predictions and checkpoints will be written.')
+    parser.add_argument('--data_dir', default='data/esconv',
+                        help='Path saved data')
+    parser.add_argument('--seed', default=42,
+                        help='Path saved data')
+    parser.add_argument('--per_device_train_batch_size', default=16, type=int)
+    parser.add_argument('--per_device_eval_batch_size', default=32, type=int)
+    # parser.add_argument('--per_device_eval_batch_size', default=32, type=int)
+    parser.add_argument('--num_train_epochs', default=5, type=int)
+    parser.add_argument('--learning_rate', default=5e-5, type=float)
+    parser.add_argument('--lr2', default=5e-5, type=float)
+    parser.add_argument('--evaluation_strategy', default="epoch", type=str)
+    parser.add_argument('--save_strategy', default="epoch", type=str)
+    parser.add_argument('--do_train', default=True)
+    parser.add_argument('--do_eval', default=True)
+    parser.add_argument('--do_predict', default=True)
+    parser.add_argument('--load_best_model_at_end', default=True)
+    parser.add_argument("--metric_for_best_model", default="topacc@3")
+    parser.add_argument("--save_total_limit", default=3, type=int)
+    parser.add_argument("--model_type", default="1")
+    parser.add_argument("--cluster_num", default=6)
+    parser.add_argument("--optim_type", default="2")
+
+    # parser.add_argument('--load_best_model_at_end', default=True)
+    args = parser.parse_args()
+    # print(args.extend_data, args.output_dir)
+    # args.output_dir = f'rebase_03/{args.output_dir}_model{args.model_type}_cluster_{args.cluster_num}_optim_{args.optim_type}'
+    # args.output_dir = f'seventh_try/{args.output_dir}_model{args.model_type}_cluster_{args.cluster_num}'
+    args.logging_dir = args.output_dir + "/runs"
+
+    # strateges = get_stratege('../new_strategy.json', norm=True)
+    # stratege2id = {v: k for k, v in enumerate(strateges)}
+    train_path = args.data_dir + '/train.json'
+    val_path = args.data_dir + '/dev.json'
+    test_path = args.data_dir + '/test.json'
+    tokenizer = BertTokenizer.from_pretrained(args.pretrain_model, use_fast=False)
+
+    model, loading_info = MODEL_LIST[args.model_type].from_pretrained(args.pretrain_model, num_labels=1,
+                                                                      problem_type="regression",
+                                                                      output_loading_info=True)
+    sencond_parameters = loading_info['missing_keys']
+
+    if 'P4G' in args.data_dir:
+        train_set = TopicRankingDataset(train_path, tokenizer, data_type='p4g')
+        eval_set = TopicRankingDataset(val_path, tokenizer, data_type='p4g')
+        test_set = TopicRankingDataset(test_path, tokenizer, data_type='p4g')
+    else:
+        train_set = TopicRankingDataset(train_path, tokenizer, cluster_num=args.cluster_num)
+        eval_set = TopicRankingDataset(val_path, tokenizer, cluster_num=args.cluster_num)
+        test_set = TopicRankingDataset(test_path, tokenizer, cluster_num=args.cluster_num)
+
+    print(f"output_dir: {args.output_dir}")
+    if not os.path.exists(args.output_dir):
+        os.makedirs(args.output_dir)
     os.environ["WANDB_DISABLED"] = "true"
     fix_random(args.seed)
     train()

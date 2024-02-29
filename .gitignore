@@ -9,4 +9,7 @@ data/esconv/*
 data/P4G/*
 TopicRanking/data/*
 TopicRanking/output/*
+TopicRanking/inference_results/*
 utils/call_LLM_API/api_key.txt
+utils/nlgeval/*
+FT_Generator/model/*

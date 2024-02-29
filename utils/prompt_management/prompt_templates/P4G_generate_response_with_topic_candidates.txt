@@ -1,0 +1,13 @@
+[Dialogue History]
+{dialogue_history}
+Persuader: [Next Response]
+
+[Topic Candidates]
+{topic_candidates}
+
+The above [Dialogue History] is a conversation between a Persuader and a Persuadee about a charity called Save the Children. The [Topic Candidates] are the possible content that the Persuader might be able to mention in the [Next Response].
+
+Based on the [Dialogue History], draft the [Next Response] of the Persuader (less than 50 words). You can refer to the content in the [Topic Candidates] to enrich the response, but you do not have to include them if they are not suitable according to the [Dialogue History].
+
+Your answer should be in the following format:
+Persuader: [Your generated Next Response]

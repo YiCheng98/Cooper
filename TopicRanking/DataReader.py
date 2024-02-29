@@ -77,7 +77,6 @@ class TopicRankingDataset(Dataset):
         start_index = 0
         continue_num = 0
         for item_id, one_item in enumerate(data):
-            #  one_item['dialogue_history']
             current_state = []
             topk_cluster_index = []
             if data_type == 'esc':
@@ -93,13 +92,10 @@ class TopicRankingDataset(Dataset):
                 tmp_distance_list = one_item['progression_info'][one_name]['distances']
                 topk_cluster_index.append(np.argsort(tmp_distance_list)[-self.cluster_num:])
             topic_candidate_num_distribution.append(len(one_item['topic_candidates']))
-            # print('whats your problem', len(one_item['topic_candidates']))
+
             try:
                 for one_topic in one_item['topic_candidates']:
                     topic_sen = one_topic['topic']
-                    # sub_task = one_topic['subgoal']
-                    # print('keys: ', one_topic.keys())
-
                     tmp_label = len(one_item['topic_candidates']) - one_topic['ranking_scores']['ranking'] + 1
                     label_distribution.append(tmp_label)
                     self.total_data.append({
@@ -120,8 +116,7 @@ class TopicRankingDataset(Dataset):
         print('topic_candidate: ', Counter(topic_candidate_num_distribution).most_common(10))
         print('label distribution: ', Counter(label_distribution).most_common(20))
         print('total trained num: ', len(self.total_data))
-        # if 'test' in file_path:
-        #     self.total_data = self.total_data[:1000]
+
     def encode_sentence(self, history, topic):
         history_token = self.tokenizer.encode(history, add_special_tokens=False)
         topic_token = self.tokenizer.encode(topic, add_special_tokens=False)
@@ -188,13 +183,13 @@ class TopicRankingDatasetForTest(Dataset):
                     "history": dialogue_history,
                     "topic": one_topic,
                     "labels": 1,
-                    "current_state":current_state,
-                    "topk_cluster_index":topk_cluster_index
+                    "current_state": current_state,
+                    "topk_cluster_index": topk_cluster_index
                 }
-
             self.total_data.append(tmp_dic)
         # if 'test' in file_path:
         #     self.total_data = self.total_data[:1000]
+
     def encode_sentence(self, history, topic):
         history_token = self.tokenizer.encode(history, add_special_tokens=False)
         topic_token = self.tokenizer.encode(topic, add_special_tokens=False)
@@ -221,10 +216,9 @@ class TopicRankingDatasetForTest(Dataset):
         }
         return ans
 
-    def __getitem__(self, item):## item是编号， item一个整数， item>=0 item< __len()__
+    def __getitem__(self, item):
         tmp_dic = self.total_data[item]
         return self.get_model_input(tmp_dic)
 
     def __len__(self):
-        # return 1004
         return len(self.total_data)
