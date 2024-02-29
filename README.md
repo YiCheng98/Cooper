@@ -51,5 +51,3 @@ CUDA_VISIBLE_DEVICES=0,1 python train.py \
 ```
 To conduct the experiment on the P4G dataset, you can substitute all ``esconv`` with ``P4G`` in the above command.
 
-
-
