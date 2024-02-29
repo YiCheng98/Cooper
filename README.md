@@ -39,6 +39,4 @@ python inference.py --inference_data_path ../TopicRanking/inference_results/esco
 ```
 To conduct the experiment on the P4G dataset, you can substitute all ``esconv`` with ``P4G`` in the above command.
 
-### Finetuned Generator
-
 
