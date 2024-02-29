@@ -40,5 +40,16 @@ python inference.py --inference_data_path ../TopicRanking/inference_results/esco
 To conduct the experiment on the P4G dataset, you can substitute all ``esconv`` with ``P4G`` in the above command.
 
 ### Finetuned Generator
+To train the finetuned generator, please run the following command.
+```
+cd FT_Generator
+CUDA_VISIBLE_DEVICES=0,1 python train.py \
+--model_path facebook/bart-base \
+--output_dir ./model/esconv/  \
+--data_dir ../TopicRanking/data/esconv/  \
+--max_eval_samples 200
+```
+To conduct the experiment on the P4G dataset, you can substitute all ``esconv`` with ``P4G`` in the above command.
+
 
 

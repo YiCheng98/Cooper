@@ -1,7 +1,4 @@
 import sys
-
-import torch
-
 sys.path.append('..')
 
 from utils.nlgeval import calc_nlg_metrics
@@ -47,7 +44,7 @@ parser.add_argument("--lr2",default=1e-4,type=float)
 parser.add_argument("--do_train",default=True)
 parser.add_argument("--do_eval",default=True)
 parser.add_argument("--do_predict",default=True)
-parser.add_argument("--per_device_train_batch_size", default=16, type=int)
+parser.add_argument("--per_device_train_batch_size", default=32, type=int)
 parser.add_argument("--per_device_eval_batch_size", default=8, type=int)
 parser.add_argument("--overwrite_output_dir", action="store_true")
 parser.add_argument("--warmup_ratio", default=0.0, type=float)
@@ -55,16 +52,16 @@ parser.add_argument("--max_source_length", default=512, type=int)
 parser.add_argument("--generation_max_length", default=64, type=int)  # 这里可以改
 parser.add_argument("--seed", default=3407, type=int)
 parser.add_argument("--save_total_limit", default=3, type=int)
-parser.add_argument("--num_train_epochs", default=10, type=int)
+parser.add_argument("--num_train_epochs", default=20, type=int)
 parser.add_argument("--metric_for_best_model", default="Bleu_2",type=str)
 parser.add_argument("--greater_is_better", default=True)
 parser.add_argument("--evaluation_strategy", default="epoch",type=str)  # 注意一下这个地方
-parser.add_argument("--learning_rate", default=2e-5, type=float)
+parser.add_argument("--learning_rate", default=5e-5, type=float)
 parser.add_argument("--save_strategy", default="epoch", type=str)
 parser.add_argument("--load_best_model_at_end", default=True)
 parser.add_argument("--ignore_pad_token_for_loss", default=True)
 parser.add_argument("--predict_with_generate", default=True)
-parser.add_argument("--num_beams", default=4, type=int)
+parser.add_argument("--num_beams", default=1, type=int)
 parser.add_argument("--not_pretrain", action="store_true")
 parser.add_argument("--repetition_penalty", default=1.0, type=float)
 # parser.add_argument("--config_path", default='../../MODEL/transformer_config', type=str)
@@ -72,6 +69,8 @@ parser.add_argument("--dataset_type", type=str, default="esconv", help="either b
 parser.add_argument("--num_candidates", type=int, default=3, help="number of candidates")
 parser.add_argument("--model_path", type=str, default="facebook/bart-base", help="model path")
 parser.add_argument("--output_dir", type=str, default="./model/esconv/", help="output directory")
+parser.add_argument("--data_dir", type=str, default="../TopicRanking/data/esconv/", help="data directory")
+parser.add_argument("--max_eval_samples", type=int, default=200, help="max evaluation samples")
 
 args = parser.parse_args()
 arg_dict = args.__dict__
@@ -82,12 +81,12 @@ logger = logging.getLogger(__name__)
 args = parser.parse_args()
 train_parser = HfArgumentParser(Seq2SeqTrainingArguments)
 
-data_dir = '../TopicRanking/data/esconv/'
-dataset_type = 'esconv'
-num_candidates = 3
+data_dir = args.data_dir
+dataset_type = args.dataset_type
+num_candidates = args.num_candidates
 model_path = args.model_path
-max_eval_samples = 100
-output_dir = "./model/esconv/"
+max_eval_samples = args.max_eval_samples
+output_dir = args.output_dir
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
@@ -108,47 +107,38 @@ def compute_metrics(eval_preds):
     decoder_preds, decoder_labels = eval_preds
     ref_list = []
     hyp_list = []
-    for ref, hyp in tqdm(zip(decoder_labels, decoder_preds[0])):
-        preds_token_index = []
-        for logits in hyp:
-            token_index = logits.argmax(dim=-1).item()
-            preds_token_index.append(token_index)
+    for ref, hyp in zip(decoder_labels, decoder_preds):
         ref = tokenizer.decode(ref, skip_special_tokens=True, clean_up_tokenization_spaces=True)
-        hyp = tokenizer.decode(preds_token_index, skip_special_tokens=True, clean_up_tokenization_spaces=True)
+        hyp = [tokenizer.pad_token_id if index<0 else index for index in hyp]
+        hyp = tokenizer.decode(hyp, skip_special_tokens=True, clean_up_tokenization_spaces=True)
         if len(hyp) == 0:
             hyp = '&'
         ref_list.append(ref)
         hyp_list.append(hyp)
     # print 10 examples
-    for i in range(10):
+    for i in range(3):
         print("ref:", ref_list[i])
         print("hyp:", hyp_list[i])
         print()
     return calc_nlg_metrics(decoder_preds=hyp_list, decoder_labels=ref_list)
-
-def set_log(training_args):
-    logging.basicConfig(
-        format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
-        datefmt="%m/%d/%Y %H:%M:%S",
-        handlers=[logging.StreamHandler(sys.stdout)],
-    )
-    logger.setLevel(logging.INFO if is_main_process(training_args.local_rank) else logging.WARN)
-
-    # Log on each process the small summary:
-    logger.warning(
-        f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}"
-        + f"distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
-    )
-
-    # Set the verbosity to info of the Transformers logger (on main process only):
-    if is_main_process(training_args.local_rank):
-        transformers.utils.logging.set_verbosity_info()
-    logger.info("Training/evaluation parameters %s", training_args)
-
+def get_optimizer(model, second_parameter):
+    optimizer_grouped_parameters = [
+        {
+            "params": [p for n, p in model.named_parameters() if n in second_parameter],
+            "lr": args.lr2,
+        },
+        {
+            "params": [p for n, p in model.named_parameters() if n not in second_parameter],
+            "lr": args.learning_rate
+        },
+    ]
+    optimizer = AdamW(optimizer_grouped_parameters)
+    return optimizer
 
 if __name__== "__main__":
     # define the optimizer (AdamW)
-    optimizer = AdamW(model.parameters(), lr=args.lr2)
+    second_parameter = ["model.encoder.embed_positions.weight", "model.decoder.embed_positions.weight"]
+    optimizer = get_optimizer(model, second_parameter)
     training_args = Seq2SeqTrainingArguments(
         output_dir=output_dir,
         do_train=args.do_train,
@@ -169,15 +159,16 @@ if __name__== "__main__":
         save_strategy=args.save_strategy,
         load_best_model_at_end=args.load_best_model_at_end,
         predict_with_generate=args.predict_with_generate,
+        generation_num_beams=args.num_beams,
     )
     trainer = Seq2SeqTrainer(
         model=model,
         compute_metrics=compute_metrics,
         args=training_args,
-        train_dataset=test_set,
+        train_dataset=train_set,
         eval_dataset=dev_set,
         optimizers=(optimizer, None)
     )
-    # trainer.train()
-    trainer.evaluate()
+    trainer.train()
+    # trainer.evaluate()
     # trainer.save_model("bart_topic_ranking")

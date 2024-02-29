@@ -6,9 +6,9 @@ import torch
 def count_turns(dialog_text):
     return dialog_text.count(": ")
 
-def recent_dialog(dialog_text, consider_tuen_num=10):
+def recent_dialog(dialog_text, consider_turn_num=10):
     turns = dialog_text.split(": ")
-    turns = turns[-consider_tuen_num:]
+    turns = turns[-consider_turn_num:]
     return ": ".join(turns)
 
 class Dataset:
