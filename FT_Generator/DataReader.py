@@ -6,10 +6,14 @@ import torch
 def count_turns(dialog_text):
     return dialog_text.count(": ")
 
-def recent_dialog(dialog_text, consider_turn_num=10):
+def recent_dialog(dialog_text, consider_turn_num=30):
     turns = dialog_text.split(": ")
-    turns = turns[-consider_turn_num:]
-    return ": ".join(turns)
+    if len(turns) <= consider_turn_num:
+        return dialog_text
+    else:
+        turns[-consider_turn_num] = turns[-consider_turn_num-1][-3:] + turns[-consider_turn_num]
+        turns = turns[-consider_turn_num:]
+        return ": ".join(turns)
 
 class Dataset:
     def __init__(self, tokenizer, file_path, num_candidates, max_source_len=512, max_target_len=128):
@@ -24,25 +28,26 @@ class Dataset:
         else:
             sep_token = tokenizer.sep_token
         for sample in data:
-            dialogue_history = recent_dialog(sample['dialogue_history']) + " sys: "
+            # dialogue_history = recent_dialog(sample['dialogue_history'])
+            dialogue_history = sample['dialogue_history']
             states = []
             if "states" in sample.keys():
                 for state_key in sample["states"].keys():
                     states.append(sample['states'][state_key])
             topic_candidates = sample['topic_candidates']
-            # ranking_result = sample['ranking_result']
+            ranking_result = sample['ranking_result']
+            selected_topics = [topic_candidates[r - 1]['topic'] for r in ranking_result][:num_candidates]
             gold_response = sample['gold_response']
-            selected_topics = [topic['topic'] for topic in topic_candidates][:num_candidates]
-            input = sep_token.join(selected_topics + states + [dialogue_history])
+            input = tokenizer.cls_token + sep_token.join(selected_topics + states + [dialogue_history])
             results.append({'dialogue_history': dialogue_history,
-                            'gold_response': gold_response,
+                            'gold_response': tokenizer.bos_token + gold_response + tokenizer.eos_token,
                             'input': input})
         self.total_data = results
 
     def get_model_input(self, tmp_dic):
         input_ids = self.tokenizer.encode(tmp_dic['input'], add_special_tokens=False)
         # truncate the input_ids to max_source_len
-        input_ids = input_ids[:self.max_source_len]
+        input_ids = input_ids[-self.max_source_len:]
         # pad the input_ids to max_source_len
         input_ids = input_ids + [self.tokenizer.pad_token_id] * max(self.max_source_len - len(input_ids), 0)
         labels = self.tokenizer.encode(tmp_dic['gold_response'], add_special_tokens=False)

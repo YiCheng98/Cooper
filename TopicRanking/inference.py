@@ -28,9 +28,9 @@ warnings.filterwarnings("ignore")
 parser = argparse.ArgumentParser()
 parser.add_argument('--model_path', default='output/esconv/',
                         help='Path to load the model')
-parser.add_argument('--inference_data_path', default='data/esconv/test.json',
+parser.add_argument('--data_dir', default='data/esconv/',
                     help='Path to load the data')
-parser.add_argument('--output_path', default='inference_results/esconv/test.json',
+parser.add_argument('--output_dir', default='inference_results/esconv/',
                         help='Path to save the output')
 parser.add_argument('--batch_size', default=32, type=int)
 parser.add_argument("--model_type", default="1")
@@ -40,21 +40,16 @@ args = parser.parse_args()
 tokenizer = BertTokenizer.from_pretrained(args.model_path)
 model = MODEL_LIST[args.model_type].from_pretrained(args.model_path)
 
-if 'P4G' in args.inference_data_path:
-    test_set = TopicRankingDataset(args.inference_data_path, tokenizer, data_type='p4g')
-else:
-    test_set = TopicRankingDataset(args.inference_data_path, tokenizer, cluster_num=args.cluster_num)
-
-# parse args.output_path and create the directory if it does not exist
-args.output_dir = os.path.dirname(args.output_path)
 
 if not os.path.exists(args.output_dir):
     os.makedirs(args.output_dir)
 
-def inference_on_data():
-    for sample in test_set:
-        print(sample.keys())
-        break
+def inference_on_data(data_path, output_path):
+    if 'P4G' in data_path:
+        dataset = TopicRankingDataset(data_path, tokenizer, data_type='p4g')
+    else:
+        dataset = TopicRankingDataset(data_path, tokenizer, cluster_num=args.cluster_num)
+
     training_args = TrainingArguments(
         per_device_eval_batch_size=args.batch_size,
         output_dir=args.output_dir,
@@ -67,16 +62,16 @@ def inference_on_data():
         tokenizer=tokenizer,
         args=training_args,
         compute_metrics=compute_metrics_with_ranking_result,
-        eval_dataset=test_set,
+        eval_dataset=dataset,
     )
-    outputs = trainer.predict(test_set)
+    outputs = trainer.predict(dataset)
     labels = outputs.label_ids
     preds = outputs.predictions
     metrics = outputs.metrics
     # print the metrics
     print()
     print("#"*50)
-    print("Metrics on the test set: ", metrics)
+    print(f"Metrics on {data_path}", metrics)
     # output the results to a file
     query_dict = defaultdict(list)
     for pre_prob, ql in zip(preds, labels):
@@ -89,7 +84,7 @@ def inference_on_data():
         pred_labels = [int(ranking_label_map(x[1], ranking_len)) for x in sorted_prob_label]
         ranking_results.append(pred_labels)
 
-    with open(args.inference_data_path, 'r') as f:
+    with open(data_path, 'r') as f:
         data = json.load(f)
 
     valid_data = []
@@ -106,9 +101,11 @@ def inference_on_data():
         sample['ranking_result'] = ranking_results[sample_index]
         del sample['progression_info']
 
-    with open(args.output_path, 'w') as f:
+    with open(output_path, 'w') as f:
         json.dump(data, f)
 
 
 if __name__ == '__main__':
-    inference_on_data()
+    for set in ['train', 'dev', 'test']:
+        inference_on_data(os.path.join(args.data_dir, f'{set}.json'), os.path.join(args.output_dir, f'{set}.json'))
+        print(f"Results are saved in {os.path.join(args.output_dir, f'{set}.json')}")

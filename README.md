@@ -17,7 +17,10 @@ python train.py --data_dir data/esconv/ --output_dir output/esconv/
 ```
 Run the following command to conduct inference on the test set.
 ```
-python inference.py --model_path output/esconv/ --inference_data_path data/esconv/test.json --output_path inference_results/esconv/test.json
+python inference.py \
+--model_path output/esconv/ \
+--data_dir data/esconv/ \
+--output_dir inference_results/esconv/
 ```
 To conduct the experiment on the P4G dataset, you can substitute ``esconv`` with ``P4G`` in the above commands.
 
@@ -44,8 +47,14 @@ cd FT_Generator
 CUDA_VISIBLE_DEVICES=0,1 python train.py \
 --model_path facebook/bart-base \
 --output_dir ./model/esconv/  \
---data_dir ../TopicRanking/data/esconv/  \
---max_eval_samples 200
+--data_dir ../TopicRanking/data/esconv/
+```
+Tp conduct inference on the test set, please run the following command.
+```
+CUDA_VISIBLE_DEVICES=0,1 python train.py \
+--do_train False \
+--model_path ./model/esconv/ \
+--data_dir ../TopicRanking/data/esconv/
 ```
 To conduct the experiment on the P4G dataset, you can substitute all ``esconv`` with ``P4G`` in the above command.
 
