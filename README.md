@@ -1,8 +1,6 @@
 # Cooper
 This repository will provide the codes and data used in the AAAI'24 paper, [*COOPER: Coordinating Specialized Agents towards a Complex Dialogue Goal*](https://arxiv.org/pdf/2312.11792.pdf).
 
-We have already uploaded the data used in our work and the codes for topic ranking. 
-
 ## Data Preparation
 The ``data/`` directory provides the annotated data we used in our experiments. Please refer to the ``data/README.md`` file for details about the downloading address and how to use the preprocessing codes.
 
