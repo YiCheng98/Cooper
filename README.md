@@ -49,7 +49,7 @@ CUDA_VISIBLE_DEVICES=0,1 python train.py \
 --output_dir ./model/esconv/  \
 --data_dir ../TopicRanking/data/esconv/
 ```
-Tp conduct inference on the test set, please run the following command.
+To conduct inference on the test set, please run the following command.
 ```
 CUDA_VISIBLE_DEVICES=0,1 python train.py \
 --do_train False \
